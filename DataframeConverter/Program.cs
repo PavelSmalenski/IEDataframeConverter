@@ -1,4 +1,5 @@
-﻿using IE.Entities.Dataframe;
+﻿using Cobol.Converter;
+using IE.Entities.Dataframe;
 using IE.Parsers;
 
 namespace DataframeConverter;
@@ -15,6 +16,8 @@ class Program
 
             dataframes = parser.Parse(inputFile);
         }
+
+        var data = CobolConverter.Convert(dataframes);
 
         System.Console.WriteLine(dataframes.Count);
         System.Console.ReadLine();
