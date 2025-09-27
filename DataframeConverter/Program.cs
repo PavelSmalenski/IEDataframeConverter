@@ -1,9 +1,22 @@
-﻿namespace DataframeConverter;
+﻿using IE.Entities.Dataframe;
+using IE.Parsers;
+
+namespace DataframeConverter;
 
 class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("Hello, World!");
+        List<Dataframe> dataframes;
+
+        using (FileStream inputFile = new FileStream("dataframesSysprint.txt", FileMode.Open))
+        {
+            var parser = new DataframeParser();
+
+            dataframes = parser.Parse(inputFile);
+        }
+
+        System.Console.WriteLine(dataframes.Count);
+        System.Console.ReadLine();
     }
 }
