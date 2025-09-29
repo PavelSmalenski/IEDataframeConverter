@@ -1,6 +1,8 @@
 ﻿using Cobol.Converter;
 using IE.Entities.Dataframe;
 using IE.Parsers;
+using IE.Printers;
+using IE.Printers.Interfaces;
 
 namespace DataframeConverter;
 
@@ -17,9 +19,15 @@ class Program
             dataframes = parser.Parse(inputFile);
         }
 
-        var data = CobolConverter.GenerateConvertedData(dataframes).ToDictionary();
+        int printedCount = 0;
+        ICodePrinter printer = new CobolToFilePrinter();
+        foreach (var dataframe in CobolConverter.GenerateConvertedData(dataframes))
+        {
+            printer.Print(dataframe.Key, dataframe.Value);
+            printedCount++;
+        }
+        System.Console.WriteLine($"Dataframes printed to files: {printedCount}");
 
-        System.Console.WriteLine(dataframes.Count);
         System.Console.ReadLine();
     }
 }
