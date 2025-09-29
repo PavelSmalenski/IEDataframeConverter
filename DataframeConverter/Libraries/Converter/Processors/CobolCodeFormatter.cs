@@ -9,13 +9,13 @@ static class CobolCodeFormatter
     const char GenericControl = ' ';
     const int IndentAreaA = 6;
     const int IndentAreaB = 4;
-    const int IndentGeneral = 4;
+    const int IndentGeneral = 3;
     const int MaxCommentLength = 64;
     const int MaxCodeLength = 64;
     const int CobolLevelStart = 1;
     const int CobolLevelStep = 5;
 
-    public static IEnumerable<string> GetCommentsCode(string comment)
+    public static IEnumerable<string> GenerateCommentsCode(string comment)
     {
         List<string> strings = new List<string>();
 
@@ -24,35 +24,35 @@ static class CobolCodeFormatter
             IEnumerable<string> commentSlices = comment.SplitOnLength(MaxCommentLength);
             foreach (var commentSlice in commentSlices)
             {
-                strings.Add(GetCommentCode(commentSlice));
+                strings.Add(GenerateCommentCode(commentSlice));
             }
         }
         else
         {
-            strings.Add(GetCommentCode(comment));
+            strings.Add(GenerateCommentCode(comment));
         }
 
         return strings;
     }
 
-    public static string GetCommentCode(string comment)
+    public static string GenerateCommentCode(string comment)
     {
         return $"{new string(' ', IndentAreaA)}{CommentControl} {comment}";
     }
 
-    public static string GetRulerCode(char rulerChar = '-')
+    public static string GenerateRulerCode(char rulerChar = '-')
     {
         return $"{new string(' ', IndentAreaA)}{CommentControl} {new string(rulerChar, MaxCommentLength)}";
     }
 
-    public static IEnumerable<string> GetVariablesCode(int level, string name, string type = "", string overridesName = "")
+    public static IEnumerable<string> GenerateVariablesCode(int level, string name, string type = "", string overridesName = "")
     {
         List<string> result = new List<string>();
 
         int indentCount = 0;
         if (level > 1)
         {
-            indentCount += IndentAreaB + (IndentGeneral * (level - 1));
+            indentCount += IndentAreaB + (IndentGeneral * (level - 2));
         }
 
         int cobolLevel = level > 1 ? CobolLevelStep * (level - 1) : CobolLevelStart;
@@ -67,7 +67,7 @@ static class CobolCodeFormatter
         if (indentCount + 3 + name.Length + 1 + type.Length + 1 > MaxCodeLength)
         {
             result.Add($"{new string(' ', IndentAreaA + 1 + indentCount)}{cobolLevel:D2} {name}");
-            result.Add($"{new string(' ', IndentAreaA + 1 + indentCount + 1)}{type}.");
+            result.Add($"{new string(' ', IndentAreaA + 1 + indentCount + IndentGeneral)}{type}.");
         }
         else
         {

@@ -29,8 +29,8 @@ static class CobolConverter
 
                 if (dataframe.Records.Count > 1)
                 {
-                    dataframePrintData.Add(CobolCodeFormatter.GetRulerCode());
-                    dataframePrintData.AddRange(CobolCodeFormatter.GetVariablesCode(startLevel, DefaultRootFieldName, CobolTypeFormatter.GetType(dataframe.RecordLength)));
+                    dataframePrintData.Add(CobolCodeFormatter.GenerateRulerCode());
+                    dataframePrintData.AddRange(CobolCodeFormatter.GenerateVariablesCode(startLevel, DefaultRootFieldName, CobolTypeFormatter.GetType(dataframe.RecordLength)));
                     startLevel++;
                 }
 
@@ -59,56 +59,56 @@ static class CobolConverter
 
     static void FillStructureHeaderComments(Dataframe dataframe, List<string> printData)
     {
-        printData.Add(CobolCodeFormatter.GetRulerCode());
-        printData.Add(CobolCodeFormatter.GetCommentCode($"DATAFRAME = {dataframe.Name}"));
+        printData.Add(CobolCodeFormatter.GenerateRulerCode());
+        printData.Add(CobolCodeFormatter.GenerateCommentCode($"DATAFRAME = {dataframe.Name}"));
 
-        printData.Add(CobolCodeFormatter.GetRulerCode());
-        printData.Add(CobolCodeFormatter.GetCommentCode($"DDNAME = {dataframe.DatasetName}"));
-        printData.Add(CobolCodeFormatter.GetCommentCode($"FECFM  = {dataframe.RecordFormat}"));
-        printData.Add(CobolCodeFormatter.GetCommentCode($"LRECL  = {dataframe.RecordLength}"));
+        printData.Add(CobolCodeFormatter.GenerateRulerCode());
+        printData.Add(CobolCodeFormatter.GenerateCommentCode($"DDNAME = {dataframe.DatasetName}"));
+        printData.Add(CobolCodeFormatter.GenerateCommentCode($"FECFM  = {dataframe.RecordFormat}"));
+        printData.Add(CobolCodeFormatter.GenerateCommentCode($"LRECL  = {dataframe.RecordLength}"));
 
-        printData.Add(CobolCodeFormatter.GetRulerCode());
-        printData.Add(CobolCodeFormatter.GetCommentCode($"KEYLEN = {dataframe.KeyLength}"));
-        printData.Add(CobolCodeFormatter.GetCommentCode($"KEYLOC = {dataframe.KeyLocation}"));
+        printData.Add(CobolCodeFormatter.GenerateRulerCode());
+        printData.Add(CobolCodeFormatter.GenerateCommentCode($"KEYLEN = {dataframe.KeyLength}"));
+        printData.Add(CobolCodeFormatter.GenerateCommentCode($"KEYLOC = {dataframe.KeyLocation}"));
 
         if (dataframe.OrganizedBy is not null)
         {
-            printData.Add(CobolCodeFormatter.GetRulerCode());
-            printData.Add(CobolCodeFormatter.GetCommentCode("ORGANIZED BY:"));
+            printData.Add(CobolCodeFormatter.GenerateRulerCode());
+            printData.Add(CobolCodeFormatter.GenerateCommentCode("ORGANIZED BY:"));
             foreach (var organizedField in dataframe.OrganizedBy)
             {
-                printData.Add(CobolCodeFormatter.GetCommentCode($"-->{organizedField}"));
+                printData.Add(CobolCodeFormatter.GenerateCommentCode($"-->{organizedField}"));
             }
         }
     }
 
     static void FillRecordHeaderComments(DataframeRecord record, List<string> printData)
     {
-        printData.Add(CobolCodeFormatter.GetRulerCode());
-        printData.Add(CobolCodeFormatter.GetCommentCode($"RECORD = {record.Name}"));
-        printData.Add(CobolCodeFormatter.GetRulerCode());
+        printData.Add(CobolCodeFormatter.GenerateRulerCode());
+        printData.Add(CobolCodeFormatter.GenerateCommentCode($"RECORD = {record.Name}"));
+        printData.Add(CobolCodeFormatter.GenerateRulerCode());
 
         if (record.Level != "")
         {
-            printData.Add(CobolCodeFormatter.GetCommentCode($"LEVEL = {record.Level}"));
+            printData.Add(CobolCodeFormatter.GenerateCommentCode($"LEVEL = {record.Level}"));
         }
         if (record.Key != "")
         {
-            printData.Add(CobolCodeFormatter.GetCommentCode("KEY ="));
-            printData.AddRange(CobolCodeFormatter.GetCommentsCode(record.Key));
+            printData.Add(CobolCodeFormatter.GenerateCommentCode("KEY ="));
+            printData.AddRange(CobolCodeFormatter.GenerateCommentsCode(record.Key));
         }
         if (record.IdentifiedBy != "")
         {
-            printData.Add(CobolCodeFormatter.GetCommentCode("IDENTIFIED ="));
-            printData.AddRange(CobolCodeFormatter.GetCommentsCode(record.IdentifiedBy));
+            printData.Add(CobolCodeFormatter.GenerateCommentCode("IDENTIFIED ="));
+            printData.AddRange(CobolCodeFormatter.GenerateCommentsCode(record.IdentifiedBy));
         }
 
-        printData.Add(CobolCodeFormatter.GetRulerCode());
+        printData.Add(CobolCodeFormatter.GenerateRulerCode());
     }
 
     static void FillVariables(DataframeField field, int level, List<string> printData)
     {
-        printData.AddRange(CobolCodeFormatter.GetVariablesCode(level, field.Name, CobolTypeFormatter.GetType(field)));
+        printData.AddRange(CobolCodeFormatter.GenerateVariablesCode(level, field.Name, CobolTypeFormatter.GetType(field)));
 
         if (field is DataframeFieldGroup group)
         {
