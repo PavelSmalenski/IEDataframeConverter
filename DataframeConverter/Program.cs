@@ -17,7 +17,7 @@ class Program
             dataframes = parser.Parse(inputFile);
         }
 
-        var data = CobolConverter.Convert(dataframes);
+        var data = CobolConverter.GenerateConvertedData(dataframes).ToDictionary();
 
         System.Console.WriteLine(dataframes.Count);
         System.Console.ReadLine();

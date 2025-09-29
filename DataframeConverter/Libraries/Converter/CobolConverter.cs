@@ -8,54 +8,42 @@ static class CobolConverter
 {
     const string DefaultRootFieldName = "RECORD-ROOT";
 
-    public static Dictionary<string, List<string>>? Convert(List<Dataframe> dataframes)
+    public static IEnumerable<KeyValuePair<string, List<string>>> GenerateConvertedData(List<Dataframe> dataframes)
     {
-
-        if (dataframes.Count > 0)
+        foreach (var dataframe in dataframes)
         {
-            Dictionary<string, List<string>> cobolStructures = new Dictionary<string, List<string>>();
+            int startLevel = 1;
+            string redefinesVarName = "";
 
-            foreach (var dataframe in dataframes)
+            List<string> dataframePrintData = new List<string>();
+            if (dataframe.Records is null)
             {
-                int startLevel = 1;
-                string redefinesVarName = "";
+                continue;
+            }
 
-                List<string> dataframePrintData = new List<string>();
-                if (dataframe.Records is null)
+            FillStructureHeaderComments(dataframe, dataframePrintData);
+
+            if (dataframe.Records.Count > 1)
+            {
+                dataframePrintData.Add(CobolCodeFormatter.GenerateRulerCode());
+                dataframePrintData.AddRange(CobolCodeFormatter.GenerateVariablesCode(startLevel, DefaultRootFieldName, CobolTypeFormatter.GenerateType(dataframe.RecordLength)));
+                // startLevel++;
+                redefinesVarName = DefaultRootFieldName;
+            }
+
+            foreach (var record in dataframe.Records)
+            {
+                FillRecordHeaderComments(record, dataframePrintData);
+
+                if (record.RootGroup is null)
                 {
                     continue;
                 }
 
-                FillStructureHeaderComments(dataframe, dataframePrintData);
-
-                if (dataframe.Records.Count > 1)
-                {
-                    dataframePrintData.Add(CobolCodeFormatter.GenerateRulerCode());
-                    dataframePrintData.AddRange(CobolCodeFormatter.GenerateVariablesCode(startLevel, DefaultRootFieldName, CobolTypeFormatter.GenerateType(dataframe.RecordLength)));
-                    // startLevel++;
-                    redefinesVarName = DefaultRootFieldName;
-                }
-
-                foreach (var record in dataframe.Records)
-                {
-                    FillRecordHeaderComments(record, dataframePrintData);
-
-                    if (record.RootGroup is null)
-                    {
-                        continue;
-                    }
-
-                    FillVariables(record.RootGroup, startLevel, dataframePrintData, redefinesVarName);
-                }
-
-                cobolStructures.Add(dataframe.Name, dataframePrintData);
+                FillVariables(record.RootGroup, startLevel, dataframePrintData, redefinesVarName);
             }
 
-            return cobolStructures;
-        }
-        else
-        {
-            return null;
+            yield return new KeyValuePair<string, List<string>>(dataframe.Name, dataframePrintData);
         }
     }
 
