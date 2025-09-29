@@ -6,7 +6,7 @@ namespace Cobol.Converter;
 
 static class CobolConverter
 {
-    const string DefaultRootFieldName = "ROOT";
+    const string DefaultRootFieldName = "RECORD-ROOT";
 
     public static Dictionary<string, List<string>>? Convert(List<Dataframe> dataframes)
     {
@@ -18,6 +18,7 @@ static class CobolConverter
             foreach (var dataframe in dataframes)
             {
                 int startLevel = 1;
+                string redefinesVarName = "";
 
                 List<string> dataframePrintData = new List<string>();
                 if (dataframe.Records is null)
@@ -30,8 +31,9 @@ static class CobolConverter
                 if (dataframe.Records.Count > 1)
                 {
                     dataframePrintData.Add(CobolCodeFormatter.GenerateRulerCode());
-                    dataframePrintData.AddRange(CobolCodeFormatter.GenerateVariablesCode(startLevel, DefaultRootFieldName, CobolTypeFormatter.GetType(dataframe.RecordLength)));
-                    startLevel++;
+                    dataframePrintData.AddRange(CobolCodeFormatter.GenerateVariablesCode(startLevel, DefaultRootFieldName, CobolTypeFormatter.GenerateType(dataframe.RecordLength)));
+                    // startLevel++;
+                    redefinesVarName = DefaultRootFieldName;
                 }
 
                 foreach (var record in dataframe.Records)
@@ -43,7 +45,7 @@ static class CobolConverter
                         continue;
                     }
 
-                    FillVariables(record.RootGroup, startLevel, dataframePrintData);
+                    FillVariables(record.RootGroup, startLevel, dataframePrintData, redefinesVarName);
                 }
 
                 cobolStructures.Add(dataframe.Name, dataframePrintData);
@@ -106,15 +108,15 @@ static class CobolConverter
         printData.Add(CobolCodeFormatter.GenerateRulerCode());
     }
 
-    static void FillVariables(DataframeField field, int level, List<string> printData)
+    static void FillVariables(DataframeField field, int level, List<string> printData, string redefinesVarName = "")
     {
-        printData.AddRange(CobolCodeFormatter.GenerateVariablesCode(level, field.Name, CobolTypeFormatter.GetType(field)));
+        printData.AddRange(CobolCodeFormatter.GenerateVariablesCode(level, field.Name, CobolTypeFormatter.GenerateType(field), redefinesVarName));
 
         if (field is DataframeFieldGroup group)
         {
             foreach (var groupField in group.ChildFields)
             {
-                FillVariables(groupField, level + 1, printData);
+                FillVariables(groupField, level + 1, printData, "");
             }
         }
     }

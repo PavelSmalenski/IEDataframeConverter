@@ -5,12 +5,12 @@ namespace Cobol.Converter.Processors;
 
 static class CobolTypeFormatter
 {
-    public static string GetType(int length)
+    public static string GenerateType(int length)
     {
         return $"PIC X({length})";
     }
 
-    public static string GetType(DataframeField dataframeField)
+    public static string GenerateType(DataframeField dataframeField)
     {
         string occurs = dataframeField.OccursCount > 0 ? $" OCCURS {dataframeField.OccursCount} TIMES" : "";
 
@@ -20,7 +20,7 @@ static class CobolTypeFormatter
         }
         else if (dataframeField is DataframeFieldAlphanumeric alphanumeric)
         {
-            return $" PIC X({alphanumeric.BytesLength}){occurs}";
+            return $"PIC X({alphanumeric.BytesLength}){occurs}";
         }
         else if (dataframeField is DataframeFieldNumeric numeric)
         {
