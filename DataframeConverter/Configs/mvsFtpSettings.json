@@ -1,0 +1,8 @@
+{
+    "FtpSettings": {
+        "Host": "your.ftp.host",
+        "Username": "yourUsername",
+        "Password": "yourPassword",
+        "TargetPdsName": "YOUR.TARGET.PDS.NAME"
+    }
+}
