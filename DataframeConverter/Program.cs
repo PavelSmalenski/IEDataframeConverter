@@ -4,92 +4,95 @@ using IE.Entities.Dataframe;
 using IE.Parsers;
 using IE.Printers;
 using IE.Printers.Interfaces;
+using DataframeConverter.Libraries.MvsFtp;
 using Microsoft.Extensions.Configuration;
+using DataframeConverter.Libraries.Menu;
+using DataframeConverter.Libraries.Menu.Entities;
 
 namespace DataframeConverter;
 
 class Program
 {
+    const string DataframesSysptintPath = "dataframesSysprint.txt";
     const string MvsFtpSettingsPath = "Configs/mvsFtpSettings.json";
+
 
     static void Main(string[] args)
     {
-        List<Dataframe> dataframes;
+        MenuController menuController = new MenuController();
+        RegisterMenuActions(menuController);
 
-        using (FileStream inputFile = new FileStream("dataframesSysprint.txt", FileMode.Open))
-        {
-            var parser = new DataframeParser();
+        menuController.HandleUserInput();
 
-            dataframes = parser.Parse(inputFile);
-        }
+        Console.WriteLine("Exiting program.");
+    }
 
-        int printedCount = 0;
-        ICodePrinter printer = new CobolToFilePrinter();
-        foreach (var dataframe in CobolConverter.GenerateConvertedData(dataframes))
-        {
-            printer.Print(dataframe.Key, dataframe.Value);
-            printedCount++;
-        }
-        System.Console.WriteLine($"Dataframes printed to files: {printedCount}");
-
-        printedCount = 0;
-        try
-        {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile(MvsFtpSettingsPath, optional: false, reloadOnChange: true);
-            var configuration = builder.Build();
-
-            var ftpSettings = configuration.GetSection("FtpSettings").Get<MvsFtpSettings>();
-
-            if (ftpSettings == null)
+    public static void RegisterMenuActions(MenuController menuController)
+    {
+        // Parse to files:
+        menuController.AddMenuOption(
+            new MenuOption("Parse dataframes to files", () =>
             {
-                throw new FtpException("Failed to load FTP settings from configuration.");
-            }
-            else if (string.IsNullOrWhiteSpace(ftpSettings.Host) ||
-                     string.IsNullOrWhiteSpace(ftpSettings.Username) ||
-                     string.IsNullOrWhiteSpace(ftpSettings.Password) ||
-                     string.IsNullOrWhiteSpace(ftpSettings.TargetPdsName))
-            {
-                throw new FtpException("One or more MVS FTP settings are missing or empty in configuration.");
-            }
+                List<Dataframe> dataframes;
+                using (FileStream inputFile = new FileStream(DataframesSysptintPath, FileMode.Open))
+                {
+                    dataframes = new DataframeParser().Parse(inputFile);
+                }
 
-            using (ICodePrinter ftpPrinter = new CobolMvsPrinter(ftpSettings.Host, ftpSettings.Username, ftpSettings.Password, ftpSettings.TargetPdsName))
-            {
+                int printedCount = 0;
+                ICodePrinter printer = new CobolToFilePrinter();
                 foreach (var dataframe in CobolConverter.GenerateConvertedData(dataframes))
                 {
                     System.Console.Write($"Printing dataframe ({printedCount + 1:D3}/{dataframes.Count:D3}): {dataframe.Key,8} ... ");
-                    ftpPrinter.Print(dataframe.Key, dataframe.Value);
+                    printer.Print(dataframe.Key, dataframe.Value);
                     printedCount++;
                     System.Console.WriteLine($"Done");
                 }
-                System.Console.WriteLine($"Dataframes printed to mainframe: {printedCount}");
-            }
-        }
-        catch (FtpCommandException e)
-        {
-            System.Console.WriteLine();
-            System.Console.WriteLine($"FTP command error: {e.Message}");
-        }
-        catch (FtpException e)
-        {
-            System.Console.WriteLine();
-            // In some cases, common FtpException may be caused by PDS being out of space
-            System.Console.WriteLine($"FTP error: {e.Message}");
-            if (e.InnerException != null)
+            }));
+
+        // Parse to MVS:
+        menuController.AddMenuOption(
+            new MenuOption("Parse dataframes to MVS (FTP)", () =>
             {
-                System.Console.WriteLine($"Inner exception: {e.InnerException.Message}");
-            }
-        }
+                int printedCount = 0;
+                try
+                {
+                    List<Dataframe> dataframes;
+                    using (FileStream inputFile = new FileStream(DataframesSysptintPath, FileMode.Open))
+                    {
+                        dataframes = new DataframeParser().Parse(inputFile);
+                    }
 
-        System.Console.ReadLine();
-    }
+                    var mvsFtpSettingsBuilder = new MvsFtpSettingsBuilder();
+                    var ftpSettings = mvsFtpSettingsBuilder.GetMvsFtpSettings(MvsFtpSettingsPath);
 
-    class MvsFtpSettings
-    {
-        public string Host { get; set; }
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public string TargetPdsName { get; set; }
+                    using (ICodePrinter ftpPrinter = new CobolMvsPrinter(ftpSettings.Host!, ftpSettings.Username!, ftpSettings.Password!, ftpSettings.TargetPdsName!))
+                    {
+                        foreach (var dataframe in CobolConverter.GenerateConvertedData(dataframes))
+                        {
+                            System.Console.Write($"Printing dataframe ({printedCount + 1:D3}/{dataframes.Count:D3}): {dataframe.Key,8} ... ");
+                            ftpPrinter.Print(dataframe.Key, dataframe.Value);
+                            printedCount++;
+                            System.Console.WriteLine($"Done");
+                        }
+                        System.Console.WriteLine($"Dataframes printed to mainframe: {printedCount}");
+                    }
+                }
+                catch (FtpCommandException e)
+                {
+                    System.Console.WriteLine();
+                    System.Console.WriteLine($"FTP command error: {e.Message}");
+                }
+                catch (FtpException e)
+                {
+                    System.Console.WriteLine();
+                    // In some cases, common FtpException may be caused by PDS being out of space
+                    System.Console.WriteLine($"FTP error: {e.Message}");
+                    if (e.InnerException != null)
+                    {
+                        System.Console.WriteLine($"Inner exception: {e.InnerException.Message}");
+                    }
+                }
+            }));
     }
 }
